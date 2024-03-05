@@ -1,5 +1,7 @@
 <template>
-  <SchemaTable :schema="schema" />
+  <div style="padding: 100px 15%; box-sizing: border-box; height: 100%">
+    <SchemaTable :schema="schema" />
+  </div>
 </template>
 
 <script setup lang="ts">
