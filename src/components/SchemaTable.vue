@@ -1,6 +1,43 @@
 <template>
-  <filter-input v-model="currentParams.filters" :options="searchOptions" />
   <div class="grid-table">
+    <filter-input v-model="currentParams.filters" :options="searchOptions" />
+
+    <div class="grid-table-toolbar">
+      <div class="actionBar">
+        <div class="batchButton">
+          <el-button
+            v-for="{ name, disabled, event } in schema.batchActions"
+            :key="name"
+            type="primary"
+            plain
+            :disabled="!selected.length || deepParse(disabled, { $selected: selected })"
+            @click="eventDict[event](selected)"
+            >{{ name }}</el-button
+          >
+        </div>
+
+        <div class="toolButton">
+          <el-button
+            v-for="{ name, disabled, event } in schema.toolbarActions"
+            :key="name"
+            type="primary"
+            plain
+            :disabled="disabled as boolean"
+            @click="eventDict[event](selected)"
+            >{{ name }}</el-button
+          >
+          <el-button
+            type="primary"
+            size="small"
+            @click="fetchData"
+            v-if="schema.dataMode === 'remote'"
+          >
+            <icon-render name="refresh" style="font-size: 20px" />
+          </el-button>
+        </div>
+      </div>
+    </div>
+
     <el-table v-loading="loading" :data="data" height="100%">
       <el-table-column
         v-for="({ label, prop, width, fixed }, index) in schema.columns"
@@ -32,24 +69,18 @@
             <el-dropdown v-if="formatterRowActions(record).length > 3" trigger="click">
               <span>
                 <el-button size="small" type="primary" link
-                  >更多 <el-icon><CaretBottom /></el-icon
-                ></el-button>
+                  >更多
+                  <icon-render name="more" style="font-size: 20px" />
+                </el-button>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item
                     :key="name"
+                    :disabled="disabled"
                     v-for="{ name, onClick, disabled } in formatterRowActions(record).slice(2)"
                   >
-                    <el-button
-                      size="small"
-                      :key="name"
-                      type="primary"
-                      link
-                      :disabled="disabled"
-                      @click="onClick"
-                      >{{ name }}</el-button
-                    >
+                    <span :key="name" @click="onClick">{{ name }}</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -75,7 +106,6 @@
 
 <script lang="ts" setup>
 import { h, onMounted, reactive, ref, watch, resolveComponent, computed } from 'vue'
-import axios from 'axios'
 import type { schemaType, anyObject, colType, eventDictType } from '@/release/types'
 import { getDataByPath, timeParse, deepParse, request } from '@/utils'
 import { isArray, isNumber, isPlainObject, isString, isFunction, mapValues } from 'lodash'
@@ -95,6 +125,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const data = ref<any[]>([])
+
+const selected = ref<any[]>([])
 
 const loading = ref(false)
 
@@ -176,7 +208,7 @@ const formatterColumn = ({ rowData, column }: { rowData: anyObject; column: colT
 const formatterRowActions = computed(() => {
   const { rowActions = [] } = props.schema
 
-  return (record) =>
+  return (record: any) =>
     rowActions
       .map((item) => {
         const parseItem = deepParse(item, { $row: record.row })
@@ -184,7 +216,7 @@ const formatterRowActions = computed(() => {
         const clickEvent = props.eventDict[item.event]
 
         if (isFunction(clickEvent)) {
-          parseItem.onClick = (e) => clickEvent(record.row, record.$index, e)
+          parseItem.onClick = (e: Event) => clickEvent(record.row, record.$index, e)
         }
 
         return parseItem
@@ -215,7 +247,6 @@ watch(currentParams, () => {
   flex-direction: column;
   position: relative;
   background-color: #fff;
-  padding: 10px;
   box-sizing: border-box;
   border-radius: 5px;
 

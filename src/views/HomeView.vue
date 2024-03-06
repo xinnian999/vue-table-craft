@@ -64,8 +64,7 @@ const schema: schemaType = {
   rowActions: [
     {
       name: '编辑',
-      event: 'rowEdit',
-      hidden: '{{ $row.id%2===0 }}'
+      event: 'rowEdit'
     },
     {
       name: '删除',
@@ -75,16 +74,38 @@ const schema: schemaType = {
     {
       name: '同步',
       event: 'rowDelete'
+    },
+    {
+      name: '同步',
+      event: 'rowDelete',
+      disabled: true
+    }
+  ],
+  batchActions: [
+    {
+      name: '批量删除',
+      event: 'batchEdit'
+    },
+    {
+      name: '批量编辑',
+      event: 'rowEdit'
+    }
+  ],
+  toolbarActions: [
+    {
+      name: '新建',
+      event: 'batchEdit'
     }
   ]
 }
 
 const eventDict: eventDictType = {
-  rowEdit: (rowData, index, e) => {
-    console.log(index)
-  },
+  rowEdit: (rowData) => {},
   rowDelete: (rowData) => {
     console.log(rowData)
+  },
+  batchEdit: (selected) => {
+    console.log(selected)
   }
 }
 </script>

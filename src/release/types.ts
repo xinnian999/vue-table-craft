@@ -19,7 +19,7 @@ export type colType = {
 
 export type columnsType = colType[]
 
-export type rowActionType = {
+export type ActionType = {
   name: string
   event: string
   hidden?: boolean | string
@@ -35,7 +35,9 @@ export type schemaType = {
     dataPath: string
     totalPath: string
   }
-  rowActions?: rowActionType[]
+  rowActions?: ActionType[]
+  batchActions?: ActionType[]
+  toolbarActions?: ActionType[]
 }
 
-export type eventDictType = { [key: string]: (rowData: anyObject) => void }
+export type eventDictType = { [key: string]: (...args: any[]) => void }
