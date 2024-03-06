@@ -5,12 +5,17 @@ const templateParse = (str: string, context: { [key: string]: any }) => {
   if (!str) return str
   if (typeof str !== 'string') return str
 
-  try {
-    const parse = new Function(Object.keys(context).join(','), 'return ' + str)
+  const template = str.match(/{{(.+?)}}/)
+  if (template) {
+    try {
+      const parse = new Function(Object.keys(context).join(','), 'return ' + template[1])
 
-    return parse(...Object.values(context))
-  } catch (e) {
-    console.log(str, '模板转换错误：', e)
+      return parse(...Object.values(context))
+    } catch (e) {
+      console.log(str, '模板转换错误：', e)
+      return str
+    }
+  } else {
     return str
   }
 }

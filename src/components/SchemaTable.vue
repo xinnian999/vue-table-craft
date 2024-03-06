@@ -10,7 +10,54 @@
         :fixed="fixed"
         :formatter="(rowData) => formatterColumn({ rowData, column: schema.columns[index] })"
       />
+
+      <el-table-column fixed="right" :min-width="150" label="操作" v-if="schema.rowActions">
+        <template #default="record">
+          <el-space style="vertical-align: middle">
+            <el-button
+              v-for="{ name, disabled, onClick } in formatterRowActions(record).slice(
+                0,
+                formatterRowActions(record).length === 3 ? 3 : 2
+              )"
+              :key="name"
+              :disabled="disabled"
+              size="small"
+              type="primary"
+              link
+              @click="onClick"
+              >{{ name }}</el-button
+            >
+
+            <el-dropdown v-if="formatterRowActions(record).length > 3" trigger="click">
+              <span>
+                <el-button size="small" type="primary" link
+                  >更多 <el-icon><CaretBottom /></el-icon
+                ></el-button>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item
+                    :key="name"
+                    v-for="{ name, onClick, disabled } in formatterRowActions(record).slice(2)"
+                  >
+                    <el-button
+                      size="small"
+                      :key="name"
+                      type="primary"
+                      link
+                      :disabled="disabled"
+                      @click="onClick"
+                      >{{ name }}</el-button
+                    >
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </el-space>
+        </template>
+      </el-table-column>
     </el-table>
+
     <div class="pagination">
       <el-pagination
         v-model:page-size="currentParams.pageSize"
@@ -26,19 +73,23 @@
 </template>
 
 <script lang="ts" setup>
-import { h, onMounted, reactive, ref, watch, resolveComponent } from 'vue'
+import { h, onMounted, reactive, ref, watch, resolveComponent, computed } from 'vue'
 import axios from 'axios'
-import type { schemaType, anyObject, colType } from '@/release/types'
+import type { schemaType, anyObject, colType, eventDictType } from '@/release/types'
 import { getDataByPath, timeParse, deepParse } from '@/utils'
-import { isArray, isNumber, isPlainObject, isString } from 'lodash'
+import { isArray, isNumber, isPlainObject, isString, isFunction, mapValues } from 'lodash'
 
 const $utils = {
   timeParse
 }
 
-const props = defineProps<{
+export interface Props {
   schema: schemaType
-}>()
+  eventDict?: eventDictType
+}
+const props = withDefaults(defineProps<Props>(), {
+  eventDict: () => ({})
+})
 
 const data = ref<any[]>([])
 
@@ -101,11 +152,32 @@ const formatterColumn = ({ rowData, column }: { rowData: anyObject; column: colT
   if (isPlainObject(formatter)) {
     const componentNode = resolveComponent(formatter.component)
     const parseProps = deepParse(formatter.props, context)
-    const parseSlots = deepParse(formatter.slots, context)
+    const parseSlots = mapValues(formatter.slots, (value) => {
+      return () => deepParse(value, context)
+    })
 
     return h(componentNode, parseProps, parseSlots)
   }
 }
+
+const formatterRowActions = computed(() => {
+  const { rowActions = [] } = props.schema
+
+  return (record) =>
+    rowActions
+      .map((item) => {
+        const parseItem = deepParse(item, { $row: record.row })
+        //字典找到对应事件函数
+        const clickEvent = props.eventDict[item.event]
+
+        if (isFunction(clickEvent)) {
+          parseItem.onClick = (e) => clickEvent(record.row, record.$index, e)
+        }
+
+        return parseItem
+      })
+      .filter((item) => !item.hidden)
+})
 
 onMounted(() => {
   const { dataMode = 'static', dataSource = [] } = props.schema
