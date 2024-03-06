@@ -14,6 +14,7 @@ export type colType = {
   width?: number
   fixed?: 'left' | 'right'
   formatter?: string | formatterComponent
+  search?: boolean
 }
 
 export type columnsType = colType[]

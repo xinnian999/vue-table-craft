@@ -14,7 +14,8 @@ const schema: schemaType = {
       label: '文章标题',
       prop: 'title',
       width: 200,
-      fixed: 'left'
+      fixed: 'left',
+      search: true
     },
     {
       label: '描述',
@@ -51,29 +52,6 @@ const schema: schemaType = {
       formatter: '{{ $utils.timeParse($val) }}'
     }
   ],
-  // dataMode: 'static',
-  // dataSource: [
-  //   {
-  //     date: '2016-05-03',
-  //     name: 'Tom',
-  //     address: 'No. 189, Grove St, Los Angeles'
-  //   },
-  //   {
-  //     date: '2016-05-02',
-  //     name: 'Tom',
-  //     address: 'No. 189, Grove St, Los Angeles'
-  //   },
-  //   {
-  //     date: '2016-05-04',
-  //     name: 'Tom',
-  //     address: 'No. 189, Grove St, Los Angeles'
-  //   },
-  //   {
-  //     date: '2016-05-01',
-  //     name: 'Tom',
-  //     address: 'No. 189, Grove St, Los Angeles'
-  //   }
-  // ],
   dataMode: 'remote',
   remoteConfig: {
     api: {

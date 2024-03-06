@@ -1,4 +1,5 @@
 <template>
+  <filter-input v-model="currentParams.filters" :options="searchOptions" />
   <div class="grid-table">
     <el-table v-loading="loading" :data="data" height="100%">
       <el-table-column
@@ -76,8 +77,9 @@
 import { h, onMounted, reactive, ref, watch, resolveComponent, computed } from 'vue'
 import axios from 'axios'
 import type { schemaType, anyObject, colType, eventDictType } from '@/release/types'
-import { getDataByPath, timeParse, deepParse } from '@/utils'
+import { getDataByPath, timeParse, deepParse, request } from '@/utils'
 import { isArray, isNumber, isPlainObject, isString, isFunction, mapValues } from 'lodash'
+import FilterInput from './FilterInput.vue'
 
 const $utils = {
   timeParse
@@ -87,6 +89,7 @@ export interface Props {
   schema: schemaType
   eventDict?: eventDictType
 }
+
 const props = withDefaults(defineProps<Props>(), {
   eventDict: () => ({})
 })
@@ -99,7 +102,16 @@ const total = ref(0)
 
 const currentParams = reactive({
   pageNum: 1,
-  pageSize: 20
+  pageSize: 20,
+  filters: {}
+})
+
+const searchOptions = computed(() => {
+  const { columns } = props.schema
+
+  return columns
+    .filter((item) => item.search)
+    .map((item) => ({ label: item.label, value: item.prop }))
 })
 
 const fetchData = async () => {
@@ -121,7 +133,7 @@ const fetchData = async () => {
 
   loading.value = true
 
-  const res = await axios(api)
+  const res = await request(api)
 
   loading.value = false
 
@@ -149,6 +161,7 @@ const formatterColumn = ({ rowData, column }: { rowData: anyObject; column: colT
   if (isString(formatter)) {
     return deepParse(formatter, context)
   }
+
   if (isPlainObject(formatter)) {
     const componentNode = resolveComponent(formatter.component)
     const parseProps = deepParse(formatter.props, context)

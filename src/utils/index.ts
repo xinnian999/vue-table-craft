@@ -1,5 +1,6 @@
 export { default as getDataByPath } from './getDataByPath'
 export { default as deepParse } from './deepParse'
+export { default as request } from './request'
 
 export const timeParse = (obj = new Date(), format = 'YYYY-MM-DD HH:mm:ss') => {
   obj = new Date(obj)
