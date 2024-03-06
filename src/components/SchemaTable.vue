@@ -1,35 +1,40 @@
 <template>
   <div class="grid-table">
-    <el-table v-loading="loading" :data="data" style="width: 100%" height="100%">
+    <el-table v-loading="loading" :data="data" height="100%">
       <el-table-column
-        v-for="{ label, prop, width, fixed } in schema.columns"
+        v-for="({ label, prop, width, fixed }, index) in schema.columns"
         :key="prop"
         :prop="prop"
         :label="label"
         :width="width"
         :fixed="fixed"
+        :formatter="(rowData) => formatterColumn({ rowData, column: schema.columns[index] })"
       />
     </el-table>
-    <div>
+    <div class="pagination">
       <el-pagination
-        class="pagination"
         v-model:page-size="currentParams.pageSize"
         v-model:currentPage="currentParams.pageNum"
         background
-        layout="total, ->, sizes, jumper, prev, next"
+        layout="total, ->, sizes, jumper, prev,pager, next"
         :page-sizes="[5, 10, 20, 50, 100]"
         :total="total"
-        :pager-count="3"
+        :pager-count="5"
       />
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref, watch } from 'vue'
+import { h, onMounted, reactive, ref, watch, resolveComponent } from 'vue'
 import axios from 'axios'
-import type { schemaType } from '@/release/types'
-import { getDataByPath } from '@/utils'
+import type { schemaType, anyObject, colType } from '@/release/types'
+import { getDataByPath, timeParse, deepParse } from '@/utils'
+import { isArray, isNumber, isPlainObject, isString } from 'lodash'
+
+const $utils = {
+  timeParse
+}
 
 const props = defineProps<{
   schema: schemaType
@@ -51,7 +56,7 @@ const fetchData = async () => {
 
   if (!remoteConfig) return
 
-  const { api, dataPath } = remoteConfig
+  const { api, dataPath, totalPath } = remoteConfig
 
   const { method = 'GET' } = api
 
@@ -70,13 +75,35 @@ const fetchData = async () => {
   loading.value = false
 
   const newData = getDataByPath(res, dataPath)
+  const dataTotal = getDataByPath(res, totalPath)
 
-  if (Array.isArray(newData)) {
+  if (isArray(newData)) {
     data.value = newData
   }
 
-  if (res.data.total) {
-    total.value = res.data.total
+  if (isNumber(dataTotal)) {
+    total.value = dataTotal
+  }
+}
+
+const formatterColumn = ({ rowData, column }: { rowData: anyObject; column: colType }) => {
+  const { formatter, prop } = column
+
+  const context = { $val: rowData[prop], $row: rowData, $utils }
+
+  if (!formatter) {
+    return rowData[prop]
+  }
+
+  if (isString(formatter)) {
+    return deepParse(formatter, context)
+  }
+  if (isPlainObject(formatter)) {
+    const componentNode = resolveComponent(formatter.component)
+    const parseProps = deepParse(formatter.props, context)
+    const parseSlots = deepParse(formatter.slots, context)
+
+    return h(componentNode, parseProps, parseSlots)
   }
 }
 

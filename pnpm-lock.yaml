@@ -5,12 +5,18 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@types/lodash':
+    specifier: ^4.14.202
+    version: 4.14.202
   axios:
     specifier: ^1.6.7
     version: 1.6.7
   element-plus:
     specifier: ^2.6.0
     version: 2.6.0(vue@3.4.21)
+  lodash:
+    specifier: ^4.17.21
+    version: 4.17.21
   vue:
     specifier: ^3.4.15
     version: 3.4.21(typescript@5.3.3)

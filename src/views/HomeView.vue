@@ -15,8 +15,17 @@ const schema: schemaType = {
       prop: 'title'
     },
     {
+      label: '文章分类',
+      prop: 'category',
+      formatter: {
+        component: 'el-tag',
+        slots: { default: '$val' }
+      }
+    },
+    {
       label: '创建日期',
-      prop: 'createTime'
+      prop: 'createTime',
+      formatter: '$utils.timeParse($val)'
     }
   ],
   // dataMode: 'static',
@@ -48,7 +57,14 @@ const schema: schemaType = {
       url: 'https://hyl999.co/api/current/query/article',
       method: 'GET'
     },
-    dataPath: 'data.data'
-  }
+    dataPath: 'data.data',
+    totalPath: 'data.total'
+  },
+  rowActions: [
+    {
+      name: '编辑',
+      clickEvent: 'edit'
+    }
+  ]
 }
 </script>
