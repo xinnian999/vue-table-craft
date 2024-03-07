@@ -26,13 +26,34 @@
           >
             {{ name }}
           </el-button>
+
+          <el-dropdown trigger="click">
+            <span>
+              <el-button type="primary" size="small">
+                <template #icon> <icon-render name="eye" style="font-size: 30px" /></template>
+              </el-button>
+            </span>
+            <template #dropdown>
+              <el-checkbox-group style="padding: 10px" v-model="eyeColumnKeys">
+                <el-space direction="vertical" alignment="flex-start">
+                  <el-checkbox
+                    :key="label"
+                    :label="label"
+                    :value="prop"
+                    v-for="{ label, prop } in schema.columns"
+                  />
+                </el-space>
+              </el-checkbox-group>
+            </template>
+          </el-dropdown>
+
           <el-button
             type="primary"
             size="small"
             @click="fetchData"
             v-if="schema.dataMode === 'remote'"
           >
-            <icon-render name="refresh" style="font-size: 20px" />
+            <template #icon> <icon-render name="refresh" style="font-size: 20px" /></template>
           </el-button>
         </div>
       </div>
@@ -40,7 +61,9 @@
 
     <el-table v-loading="loading" :data="data" height="100%" border @sort-change="onSortChange">
       <el-table-column
-        v-for="({ label, prop, width, fixed, sortable }, index) in schema.columns"
+        v-for="({ label, prop, width, fixed, sortable }, index) in schema.columns.filter((item) =>
+          eyeColumnKeys.includes(item.prop)
+        )"
         :key="prop"
         :prop="prop"
         :label="label"
@@ -132,6 +155,8 @@ const selected = ref<any[]>([])
 const loading = ref(false)
 
 const total = ref(0)
+
+const eyeColumnKeys = ref<string[]>([])
 
 const currentParams = reactive({
   pageNum: 1,
@@ -235,13 +260,15 @@ const onSortChange = ({ prop, order }: { prop: string; order: string }) => {
 }
 
 onMounted(() => {
-  const { dataMode = 'static', dataSource = [] } = props.schema
+  const { dataMode = 'static', dataSource = [], columns } = props.schema
   if (dataMode === 'static') {
     data.value = dataSource
   }
   if (dataMode === 'remote') {
     fetchData()
   }
+
+  eyeColumnKeys.value = columns.map((item) => item.prop)
 })
 
 watch(currentParams, () => {
@@ -296,6 +323,7 @@ watch(currentParams, () => {
 
     .toolButton {
       display: flex;
+      gap: 10px;
     }
 
     button {
