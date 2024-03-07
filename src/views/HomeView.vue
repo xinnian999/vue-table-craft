@@ -11,6 +11,14 @@ import type { schemaType, eventDictType } from '@/release/types'
 const schema: schemaType = {
   columns: [
     {
+      label: 'ID',
+      prop: 'id',
+      width: 80,
+      fixed: 'left',
+      search: true,
+      sortable: true
+    },
+    {
       label: '文章标题',
       prop: 'title',
       width: 200,

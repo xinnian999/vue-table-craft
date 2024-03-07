@@ -1,8 +1,8 @@
 <template>
   <div class="grid-table">
-    <filter-input v-model="currentParams.filters" :options="searchOptions" />
-
     <div class="grid-table-toolbar">
+      <filter-input v-model="currentParams.filters" :options="searchOptions" />
+
       <div class="actionBar">
         <div class="batchButton">
           <el-button
@@ -21,11 +21,11 @@
             v-for="{ name, disabled, event } in schema.toolbarActions"
             :key="name"
             type="primary"
-            plain
             :disabled="disabled as boolean"
             @click="eventDict[event](selected)"
-            >{{ name }}</el-button
           >
+            {{ name }}
+          </el-button>
           <el-button
             type="primary"
             size="small"
@@ -38,14 +38,15 @@
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="data" height="100%">
+    <el-table v-loading="loading" :data="data" height="100%" border @sort-change="onSortChange">
       <el-table-column
-        v-for="({ label, prop, width, fixed }, index) in schema.columns"
+        v-for="({ label, prop, width, fixed, sortable }, index) in schema.columns"
         :key="prop"
         :prop="prop"
         :label="label"
         :width="width"
         :fixed="fixed"
+        :sortable="sortable && 'custom'"
         :formatter="(rowData) => formatterColumn({ rowData, column: schema.columns[index] })"
       />
 
@@ -135,7 +136,8 @@ const total = ref(0)
 const currentParams = reactive({
   pageNum: 1,
   pageSize: 20,
-  filters: {}
+  filters: {},
+  orderBys: {}
 })
 
 const searchOptions = computed(() => {
@@ -223,6 +225,14 @@ const formatterRowActions = computed(() => {
       })
       .filter((item) => !item.hidden)
 })
+
+const onSortChange = ({ prop, order }: { prop: string; order: string }) => {
+  if (prop && order) {
+    currentParams.orderBys = { [prop]: order.replace('ending', '') }
+  } else {
+    currentParams.orderBys = {}
+  }
+}
 
 onMounted(() => {
   const { dataMode = 'static', dataSource = [] } = props.schema
